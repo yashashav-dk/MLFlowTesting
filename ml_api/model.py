@@ -35,10 +35,10 @@ import os
 from typing import Tuple, List
 
 # Class names for the iris dataset
-IRIS_CLASSES = ['setosa', 'versicolor', 'virginica']
+IRIS_CLASSES = ["setosa", "versicolor", "virginica"]
 
 # Path to save/load the trained model
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'iris_model.joblib')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "iris_model.joblib")
 
 
 class IrisClassifier:
@@ -84,9 +84,10 @@ class IrisClassifier:
         # Split data: 80% train, 20% test
         # random_state ensures reproducible splits
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y,
+            X,
+            y,
             test_size=0.2,
-            random_state=42  # For reproducibility
+            random_state=42,  # For reproducibility
         )
 
         # Store test data for evaluation
@@ -96,10 +97,7 @@ class IrisClassifier:
         # Create and train the model
         # n_estimators = number of trees in the forest
         # random_state = reproducibility
-        self.model = RandomForestClassifier(
-            n_estimators=100,
-            random_state=42
-        )
+        self.model = RandomForestClassifier(n_estimators=100, random_state=42)
 
         # fit() is where the actual learning happens
         self.model.fit(X_train, y_train)
@@ -167,10 +165,7 @@ class IrisClassifier:
         if not self.is_trained:
             raise RuntimeError("Cannot save untrained model!")
 
-        joblib.dump({
-            'model': self.model,
-            'accuracy': self.accuracy
-        }, path)
+        joblib.dump({"model": self.model, "accuracy": self.accuracy}, path)
 
     def load(self, path: str = MODEL_PATH) -> bool:
         """
@@ -183,8 +178,8 @@ class IrisClassifier:
             return False
 
         data = joblib.load(path)
-        self.model = data['model']
-        self.accuracy = data['accuracy']
+        self.model = data["model"]
+        self.accuracy = data["accuracy"]
         self.is_trained = True
         return True
 
@@ -192,6 +187,7 @@ class IrisClassifier:
 # =============================================================================
 # MODULE-LEVEL CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def get_model() -> IrisClassifier:
     """

@@ -20,7 +20,7 @@ The prometheus_client library handles the heavy lifting.
 
 import time
 from contextlib import asynccontextmanager
-from typing import Dict, List
+from typing import Dict
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
@@ -36,13 +36,14 @@ from metrics import (
     PREDICTIONS_TOTAL,
     PREDICTION_LATENCY,
     PREDICTION_ERRORS,
-    MODEL_ACCURACY
+    MODEL_ACCURACY,
 )
 
 # =============================================================================
 # PYDANTIC MODELS (Request/Response Schemas)
 # =============================================================================
 # Pydantic models define the shape of data and validate it automatically
+
 
 class PredictionRequest(BaseModel):
     """
@@ -53,25 +54,21 @@ class PredictionRequest(BaseModel):
     - lt = less than
     - description shows up in Swagger docs
     """
+
     sepal_length: float = Field(
         ...,  # ... means required
-        gt=0, lt=10,
-        description="Sepal length in cm (typically 4.3-7.9)"
+        gt=0,
+        lt=10,
+        description="Sepal length in cm (typically 4.3-7.9)",
     )
     sepal_width: float = Field(
-        ...,
-        gt=0, lt=10,
-        description="Sepal width in cm (typically 2.0-4.4)"
+        ..., gt=0, lt=10, description="Sepal width in cm (typically 2.0-4.4)"
     )
     petal_length: float = Field(
-        ...,
-        gt=0, lt=10,
-        description="Petal length in cm (typically 1.0-6.9)"
+        ..., gt=0, lt=10, description="Petal length in cm (typically 1.0-6.9)"
     )
     petal_width: float = Field(
-        ...,
-        gt=0, lt=5,
-        description="Petal width in cm (typically 0.1-2.5)"
+        ..., gt=0, lt=5, description="Petal width in cm (typically 0.1-2.5)"
     )
 
     # Model configuration using ConfigDict (Pydantic v2 style)
@@ -81,7 +78,7 @@ class PredictionRequest(BaseModel):
                 "sepal_length": 5.1,
                 "sepal_width": 3.5,
                 "petal_length": 1.4,
-                "petal_width": 0.2
+                "petal_width": 0.2,
             }
         }
     )
@@ -89,19 +86,15 @@ class PredictionRequest(BaseModel):
 
 class PredictionResponse(BaseModel):
     """Response body for /predict endpoint."""
-    predicted_class: str = Field(
-        description="Predicted iris species"
-    )
-    confidence: float = Field(
-        description="Confidence score (0-1)"
-    )
-    probabilities: Dict[str, float] = Field(
-        description="Probability for each class"
-    )
+
+    predicted_class: str = Field(description="Predicted iris species")
+    confidence: float = Field(description="Confidence score (0-1)")
+    probabilities: Dict[str, float] = Field(description="Probability for each class")
 
 
 class HealthResponse(BaseModel):
     """Response body for /health endpoint."""
+
     status: str
     model_loaded: bool
     model_accuracy: float
@@ -139,7 +132,7 @@ async def lifespan(app: FastAPI):
     model = get_model()
 
     # Update accuracy metric
-    MODEL_ACCURACY.labels(model='iris_classifier').set(model.accuracy)
+    MODEL_ACCURACY.labels(model="iris_classifier").set(model.accuracy)
 
     print(f"Model ready! Accuracy: {model.accuracy:.2%}")
     print("=" * 50)
@@ -168,13 +161,14 @@ app = FastAPI(
     Classic ML dataset with 3 species: setosa, versicolor, virginica
     """,
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 
 # =============================================================================
 # MIDDLEWARE (runs on every request)
 # =============================================================================
+
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
@@ -208,15 +202,12 @@ async def metrics_middleware(request: Request, call_next):
     # Record metrics
     # Labels let us slice data: http_requests_total{method="POST", endpoint="/predict"}
     HTTP_REQUESTS_TOTAL.labels(
-        method=request.method,
-        endpoint=request.url.path,
-        status=response.status_code
+        method=request.method, endpoint=request.url.path, status=response.status_code
     ).inc()  # Increment counter by 1
 
-    REQUEST_LATENCY.labels(
-        method=request.method,
-        endpoint=request.url.path
-    ).observe(duration)  # Record value in histogram
+    REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path).observe(
+        duration
+    )  # Record value in histogram
 
     return response
 
@@ -224,6 +215,7 @@ async def metrics_middleware(request: Request, call_next):
 # =============================================================================
 # ENDPOINTS
 # =============================================================================
+
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 async def health_check():
@@ -241,7 +233,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         model_loaded=model is not None and model.is_trained,
-        model_accuracy=model.accuracy if model else 0.0
+        model_accuracy=model.accuracy if model else 0.0,
     )
 
 
@@ -262,7 +254,7 @@ async def metrics():
     """
     return Response(
         content=generate_latest(),  # Generate prometheus format
-        media_type=CONTENT_TYPE_LATEST  # text/plain with special charset
+        media_type=CONTENT_TYPE_LATEST,  # text/plain with special charset
     )
 
 
@@ -287,8 +279,7 @@ async def predict(request: PredictionRequest):
     if model is None:
         # Track error metric
         PREDICTION_ERRORS.labels(
-            model='iris_classifier',
-            error_type='model_not_loaded'
+            model="iris_classifier", error_type="model_not_loaded"
         ).inc()
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -301,18 +292,17 @@ async def predict(request: PredictionRequest):
             request.sepal_length,
             request.sepal_width,
             request.petal_length,
-            request.petal_width
+            request.petal_width,
         ]
         predicted_class, probabilities = model.predict(features)
 
         # Record prediction latency
         duration = time.time() - start_time
-        PREDICTION_LATENCY.labels(model='iris_classifier').observe(duration)
+        PREDICTION_LATENCY.labels(model="iris_classifier").observe(duration)
 
         # Record prediction count (by class for distribution analysis)
         PREDICTIONS_TOTAL.labels(
-            model='iris_classifier',
-            predicted_class=predicted_class
+            model="iris_classifier", predicted_class=predicted_class
         ).inc()
 
         # Build response
@@ -320,16 +310,14 @@ async def predict(request: PredictionRequest):
             predicted_class=predicted_class,
             confidence=max(probabilities),  # Highest probability
             probabilities={
-                name: prob
-                for name, prob in zip(IRIS_CLASSES, probabilities)
-            }
+                name: prob for name, prob in zip(IRIS_CLASSES, probabilities)
+            },
         )
 
     except Exception as e:
         # Track error
         PREDICTION_ERRORS.labels(
-            model='iris_classifier',
-            error_type=type(e).__name__
+            model="iris_classifier", error_type=type(e).__name__
         ).inc()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -342,7 +330,7 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "metrics": "/metrics"
+        "metrics": "/metrics",
     }
 
 
@@ -354,4 +342,5 @@ if __name__ == "__main__":
     # This runs when you execute: python app.py
     # In production, use: uvicorn app:app --host 0.0.0.0 --port 8000
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

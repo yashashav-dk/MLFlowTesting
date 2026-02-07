@@ -77,7 +77,7 @@ lint:
 	@echo "══════════════════════════════════════════════════════════════════"
 	@echo "🔍 STEP 1: LINTING - Checking code style..."
 	@echo "══════════════════════════════════════════════════════════════════"
-	cd ml_api && pip install -q ruff && ruff check . && ruff format --check .
+	cd ml_api && pip3 install -q ruff && python3 -m ruff check . && python3 -m ruff format --check .
 	@echo "✅ Linting passed!"
 	@echo ""
 
@@ -85,7 +85,7 @@ test:
 	@echo "══════════════════════════════════════════════════════════════════"
 	@echo "🧪 STEP 2: TESTING - Running unit tests..."
 	@echo "══════════════════════════════════════════════════════════════════"
-	cd ml_api && pip install -q -r requirements.txt && pytest tests/ -v --tb=short
+	cd ml_api && pip3 install -q -r requirements.txt && python3 -m pytest tests/ -v --tb=short
 	@echo "✅ All tests passed!"
 	@echo ""
 

@@ -33,6 +33,7 @@ from model import IrisClassifier, IRIS_CLASSES
 # FIXTURES - Reusable test setup
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def trained_model():
     """
@@ -67,6 +68,7 @@ def client():
 # =============================================================================
 # MODEL TESTS
 # =============================================================================
+
 
 class TestIrisClassifier:
     """Tests for the IrisClassifier model."""
@@ -132,6 +134,7 @@ class TestIrisClassifier:
 # API ENDPOINT TESTS
 # =============================================================================
 
+
 class TestHealthEndpoint:
     """Tests for the /health endpoint."""
 
@@ -158,12 +161,15 @@ class TestPredictEndpoint:
 
     def test_predict_valid_input(self, client):
         """Valid input should return prediction."""
-        response = client.post("/predict", json={
-            "sepal_length": 5.1,
-            "sepal_width": 3.5,
-            "petal_length": 1.4,
-            "petal_width": 0.2
-        })
+        response = client.post(
+            "/predict",
+            json={
+                "sepal_length": 5.1,
+                "sepal_width": 3.5,
+                "petal_length": 1.4,
+                "petal_width": 0.2,
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -174,32 +180,41 @@ class TestPredictEndpoint:
 
     def test_predict_missing_field(self, client):
         """Missing required field should return 422."""
-        response = client.post("/predict", json={
-            "sepal_length": 5.1,
-            # Missing sepal_width, petal_length, petal_width
-        })
+        response = client.post(
+            "/predict",
+            json={
+                "sepal_length": 5.1,
+                # Missing sepal_width, petal_length, petal_width
+            },
+        )
 
         assert response.status_code == 422  # Validation error
 
     def test_predict_invalid_value(self, client):
         """Invalid values should return 422."""
-        response = client.post("/predict", json={
-            "sepal_length": -1.0,  # Can't be negative
-            "sepal_width": 3.5,
-            "petal_length": 1.4,
-            "petal_width": 0.2
-        })
+        response = client.post(
+            "/predict",
+            json={
+                "sepal_length": -1.0,  # Can't be negative
+                "sepal_width": 3.5,
+                "petal_length": 1.4,
+                "petal_width": 0.2,
+            },
+        )
 
         assert response.status_code == 422
 
     def test_predict_response_probabilities_sum_to_one(self, client):
         """Probabilities should sum to 1."""
-        response = client.post("/predict", json={
-            "sepal_length": 6.0,
-            "sepal_width": 3.0,
-            "petal_length": 4.0,
-            "petal_width": 1.2
-        })
+        response = client.post(
+            "/predict",
+            json={
+                "sepal_length": 6.0,
+                "sepal_width": 3.0,
+                "petal_length": 4.0,
+                "petal_width": 1.2,
+            },
+        )
 
         data = response.json()
         prob_sum = sum(data["probabilities"].values())
@@ -230,12 +245,15 @@ class TestMetricsEndpoint:
     def test_metrics_after_prediction(self, client):
         """Metrics should update after making predictions."""
         # Make a prediction first
-        client.post("/predict", json={
-            "sepal_length": 5.1,
-            "sepal_width": 3.5,
-            "petal_length": 1.4,
-            "petal_width": 0.2
-        })
+        client.post(
+            "/predict",
+            json={
+                "sepal_length": 5.1,
+                "sepal_width": 3.5,
+                "petal_length": 1.4,
+                "petal_width": 0.2,
+            },
+        )
 
         # Check metrics
         response = client.get("/metrics")
@@ -263,15 +281,31 @@ class TestRootEndpoint:
 # INTEGRATION TESTS
 # =============================================================================
 
+
 class TestIntegration:
     """Integration tests that exercise multiple components."""
 
     def test_multiple_predictions(self, client):
         """Should handle multiple predictions correctly."""
         test_cases = [
-            {"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2},
-            {"sepal_length": 6.0, "sepal_width": 2.7, "petal_length": 4.5, "petal_width": 1.5},
-            {"sepal_length": 6.7, "sepal_width": 3.0, "petal_length": 5.5, "petal_width": 2.1},
+            {
+                "sepal_length": 5.1,
+                "sepal_width": 3.5,
+                "petal_length": 1.4,
+                "petal_width": 0.2,
+            },
+            {
+                "sepal_length": 6.0,
+                "sepal_width": 2.7,
+                "petal_length": 4.5,
+                "petal_width": 1.5,
+            },
+            {
+                "sepal_length": 6.7,
+                "sepal_width": 3.0,
+                "petal_length": 5.5,
+                "petal_width": 2.1,
+            },
         ]
 
         for case in test_cases:

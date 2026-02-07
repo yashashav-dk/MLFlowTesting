@@ -32,8 +32,8 @@ from prometheus_client import Counter, Histogram, Gauge, Info
 # =============================================================================
 # Info metric - static labels about your app (version, git commit, etc.)
 APP_INFO = Info(
-    'ml_api',  # Metric name
-    'Information about the ML API application'  # Description (shows in /metrics)
+    "ml_api",  # Metric name
+    "Information about the ML API application",  # Description (shows in /metrics)
 )
 
 # =============================================================================
@@ -42,19 +42,19 @@ APP_INFO = Info(
 # Counter for all HTTP requests
 # Labels let us filter: http_requests_total{method="POST", endpoint="/predict", status="200"}
 HTTP_REQUESTS_TOTAL = Counter(
-    'http_requests_total',
-    'Total number of HTTP requests',
-    ['method', 'endpoint', 'status']  # These become label keys
+    "http_requests_total",
+    "Total number of HTTP requests",
+    ["method", "endpoint", "status"],  # These become label keys
 )
 
 # Histogram for request latency
 # Buckets define the ranges we care about (in seconds)
 # .005 = 5ms, .01 = 10ms, etc.
 REQUEST_LATENCY = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request latency in seconds',
-    ['method', 'endpoint'],
-    buckets=[.005, .01, .025, .05, .1, .25, .5, 1.0, 2.5, 5.0, 10.0]
+    "http_request_duration_seconds",
+    "HTTP request latency in seconds",
+    ["method", "endpoint"],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
 )
 
 # =============================================================================
@@ -63,31 +63,29 @@ REQUEST_LATENCY = Histogram(
 # Counter for predictions made
 # We track by predicted class to see distribution
 PREDICTIONS_TOTAL = Counter(
-    'ml_predictions_total',
-    'Total number of ML predictions made',
-    ['model', 'predicted_class']
+    "ml_predictions_total",
+    "Total number of ML predictions made",
+    ["model", "predicted_class"],
 )
 
 # Histogram for prediction latency (just the model inference time)
 PREDICTION_LATENCY = Histogram(
-    'ml_prediction_duration_seconds',
-    'Time spent making ML predictions',
-    ['model'],
-    buckets=[.001, .005, .01, .025, .05, .1, .25, .5, 1.0]
+    "ml_prediction_duration_seconds",
+    "Time spent making ML predictions",
+    ["model"],
+    buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
 )
 
 # Gauge for model accuracy (can go up or down as we evaluate)
 MODEL_ACCURACY = Gauge(
-    'ml_model_accuracy',
-    'Current accuracy of the ML model',
-    ['model']
+    "ml_model_accuracy", "Current accuracy of the ML model", ["model"]
 )
 
 # Counter for prediction errors
 PREDICTION_ERRORS = Counter(
-    'ml_prediction_errors_total',
-    'Total number of failed predictions',
-    ['model', 'error_type']
+    "ml_prediction_errors_total",
+    "Total number of failed predictions",
+    ["model", "error_type"],
 )
 
 
@@ -101,11 +99,9 @@ def init_metrics():
     - Rate calculations working immediately
     """
     # Set application info
-    APP_INFO.info({
-        'version': '1.0.0',
-        'model': 'iris_classifier',
-        'framework': 'fastapi'
-    })
+    APP_INFO.info(
+        {"version": "1.0.0", "model": "iris_classifier", "framework": "fastapi"}
+    )
 
     # Initialize model accuracy (will be updated after evaluation)
-    MODEL_ACCURACY.labels(model='iris_classifier').set(0.0)
+    MODEL_ACCURACY.labels(model="iris_classifier").set(0.0)
