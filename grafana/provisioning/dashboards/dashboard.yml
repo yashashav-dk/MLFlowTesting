@@ -1,0 +1,60 @@
+# =============================================================================
+# Grafana Dashboard Provisioning Configuration
+# =============================================================================
+#
+# DASHBOARD PROVISIONING:
+# -----------------------
+# This file tells Grafana WHERE to find dashboard JSON files.
+# Grafana will automatically load any .json files from the specified path.
+#
+# The actual dashboard definition is in ml_dashboard.json
+#
+# =============================================================================
+
+# API version for the provisioning format
+apiVersion: 1
+
+# -----------------------------------------------------------------------------
+# DASHBOARD PROVIDERS
+# -----------------------------------------------------------------------------
+# Each provider watches a folder for dashboard JSON files
+providers:
+  - name: 'ML API Dashboards'           # Provider name (for logging)
+    orgId: 1                             # Grafana organization ID (1 = default)
+    folder: ''                           # Folder in Grafana UI ('' = root)
+    folderUid: ''                        # Folder UID (empty = no folder)
+    type: file                           # Provider type (file = read from disk)
+
+    # Disable deletion: if a dashboard is removed from disk,
+    # don't delete it from Grafana (safer)
+    disableDeletion: false
+
+    # Update interval: how often to check for changes (seconds)
+    # 10 = check every 10 seconds
+    updateIntervalSeconds: 10
+
+    # Allow UI updates: if true, dashboards can be edited in UI
+    # Changes will be overwritten on next reload though!
+    allowUiUpdates: true
+
+    # Path to dashboard JSON files
+    # This is inside the Grafana container
+    options:
+      path: /etc/grafana/provisioning/dashboards
+
+# =============================================================================
+# MULTIPLE PROVIDERS (Example)
+# =============================================================================
+# You can have multiple providers for different teams/purposes:
+#
+#   - name: 'Infrastructure Dashboards'
+#     folder: 'Infrastructure'
+#     type: file
+#     options:
+#       path: /etc/grafana/provisioning/dashboards/infrastructure
+#
+#   - name: 'Application Dashboards'
+#     folder: 'Applications'
+#     type: file
+#     options:
+#       path: /etc/grafana/provisioning/dashboards/applications

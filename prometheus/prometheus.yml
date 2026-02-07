@@ -1,0 +1,146 @@
+# =============================================================================
+# Prometheus Configuration
+# =============================================================================
+#
+# PROMETHEUS BASICS:
+# ------------------
+# Prometheus is a pull-based monitoring system. It "scrapes" metrics from
+# endpoints at regular intervals and stores them in a time-series database.
+#
+# KEY CONCEPTS:
+# - Scrape: Prometheus fetches metrics from a target
+# - Target: An endpoint that exposes metrics (our /metrics endpoint)
+# - Job: A collection of targets that serve the same purpose
+# - Instance: A single target (hostname:port)
+#
+# This file tells Prometheus:
+# 1. How often to scrape (scrape_interval)
+# 2. What to scrape (scrape_configs)
+# 3. Any special labeling rules
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# GLOBAL CONFIGURATION
+# -----------------------------------------------------------------------------
+# These settings apply to all scrape jobs unless overridden
+global:
+  # How often to scrape targets
+  # 15s is a good balance between freshness and overhead
+  # Production often uses 30s-60s
+  scrape_interval: 15s
+
+  # How often to evaluate alerting rules
+  # (We're not using alerts in this tutorial, but it's a common setting)
+  evaluation_interval: 15s
+
+  # Labels added to all metrics and alerts
+  # Useful for identifying which Prometheus instance collected the data
+  external_labels:
+    monitor: 'ml-api-monitor'
+    environment: 'development'
+
+# -----------------------------------------------------------------------------
+# ALERTING CONFIGURATION (Optional)
+# -----------------------------------------------------------------------------
+# Uncomment to enable alerting via Alertmanager
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# -----------------------------------------------------------------------------
+# RULE FILES (Optional)
+# -----------------------------------------------------------------------------
+# Load alerting and recording rules from external files
+# rule_files:
+#   - "alert_rules.yml"
+#   - "recording_rules.yml"
+
+# -----------------------------------------------------------------------------
+# SCRAPE CONFIGURATIONS
+# -----------------------------------------------------------------------------
+# Each job defines what targets to scrape and how
+scrape_configs:
+
+  # ---------------------------------------------------------------------------
+  # JOB 1: Prometheus itself
+  # ---------------------------------------------------------------------------
+  # Prometheus exposes its own metrics - it's good practice to monitor it
+  - job_name: 'prometheus'
+
+    # Override global scrape interval for this job (optional)
+    scrape_interval: 30s
+
+    # Targets to scrape
+    # static_configs = manually defined targets
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # ---------------------------------------------------------------------------
+  # JOB 2: ML API
+  # ---------------------------------------------------------------------------
+  # Our main application
+  - job_name: 'ml-api'
+
+    # Scrape every 15 seconds (uses global default)
+    # For high-traffic apps, you might increase this to reduce load
+
+    # Path to metrics endpoint (default is /metrics)
+    metrics_path: /metrics
+
+    # HTTP scheme (http or https)
+    scheme: http
+
+    # Targets to scrape
+    static_configs:
+      - targets: ['ml-api:8000']  # Docker service name:port
+        labels:
+          # Custom labels added to all metrics from this target
+          service: 'ml-api'
+          team: 'ml-platform'
+
+    # Relabeling (optional, advanced)
+    # Modify labels before storing metrics
+    # relabel_configs:
+    #   - source_labels: [__address__]
+    #     target_label: instance
+    #     regex: '([^:]+):\d+'
+    #     replacement: '${1}'
+
+# =============================================================================
+# ADVANCED CONFIGURATIONS (Commented out for reference)
+# =============================================================================
+
+# SERVICE DISCOVERY (for dynamic environments)
+# Instead of static_configs, you can use service discovery:
+#
+# Kubernetes:
+# - job_name: 'kubernetes-pods'
+#   kubernetes_sd_configs:
+#     - role: pod
+#
+# Docker:
+# - job_name: 'docker'
+#   docker_sd_configs:
+#     - host: unix:///var/run/docker.sock
+#
+# Consul:
+# - job_name: 'consul'
+#   consul_sd_configs:
+#     - server: 'consul:8500'
+
+# AUTHENTICATION (for secured endpoints)
+# basic_auth:
+#   username: 'prometheus'
+#   password: 'secret'
+#
+# bearer_token: 'your-token-here'
+#
+# tls_config:
+#   ca_file: /path/to/ca.crt
+#   cert_file: /path/to/client.crt
+#   key_file: /path/to/client.key

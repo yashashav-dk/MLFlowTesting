@@ -1,0 +1,100 @@
+# =============================================================================
+# Grafana Data Source Provisioning
+# =============================================================================
+#
+# PROVISIONING BASICS:
+# --------------------
+# Grafana can auto-configure data sources and dashboards at startup.
+# This is called "provisioning" - it reads YAML files and applies them.
+#
+# WHY PROVISION?
+# - Infrastructure as Code: Your config is versioned
+# - Reproducibility: Same setup everywhere
+# - Automation: No manual clicking in the UI
+#
+# This file tells Grafana to automatically connect to our Prometheus instance.
+#
+# =============================================================================
+
+# API version for the provisioning format
+apiVersion: 1
+
+# -----------------------------------------------------------------------------
+# DATA SOURCES
+# -----------------------------------------------------------------------------
+# List of data sources to provision
+datasources:
+  # Prometheus data source
+  - name: Prometheus                    # Display name in Grafana
+    type: prometheus                    # Data source type
+    access: proxy                       # How Grafana accesses it
+
+    # URL of the data source
+    # In Docker Compose, services can reach each other by service name
+    # "prometheus" is the service name in docker-compose.yml
+    url: http://prometheus:9090
+
+    # Set as default data source
+    # When creating panels, this will be pre-selected
+    isDefault: true
+
+    # Unique identifier (used for provisioned dashboards to reference this)
+    uid: prometheus
+
+    # Editable: false = can't be modified via UI (only config file)
+    # This prevents accidental changes in production
+    editable: false
+
+    # ---------------------------------------------------------------------
+    # JSON DATA (Additional settings)
+    # ---------------------------------------------------------------------
+    jsonData:
+      # HTTP method to use for queries
+      httpMethod: POST
+
+      # Time interval for auto-generated queries
+      # Matches our Prometheus scrape interval
+      timeInterval: "15s"
+
+      # Query timeout
+      queryTimeout: "60s"
+
+      # Manage alerts via this data source
+      manageAlerts: true
+
+      # Prometheus type (helps Grafana optimize queries)
+      prometheusType: Prometheus
+
+      # Prometheus version (for feature detection)
+      prometheusVersion: 2.45.0
+
+    # ---------------------------------------------------------------------
+    # SECURE JSON DATA (Secrets)
+    # ---------------------------------------------------------------------
+    # Use this for sensitive data like passwords
+    # secureJsonData:
+    #   basicAuthPassword: 'secret'
+
+# =============================================================================
+# ADDITIONAL DATA SOURCES (Examples)
+# =============================================================================
+# You can add multiple data sources:
+#
+#   - name: Loki
+#     type: loki
+#     url: http://loki:3100
+#     access: proxy
+#
+#   - name: InfluxDB
+#     type: influxdb
+#     url: http://influxdb:8086
+#     access: proxy
+#     database: mydb
+#
+#   - name: PostgreSQL
+#     type: postgres
+#     url: postgres:5432
+#     database: mydb
+#     user: grafana
+#     secureJsonData:
+#       password: 'secret'
